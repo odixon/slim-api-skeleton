@@ -20,6 +20,7 @@ use Micheh\Cache\CacheUtil;
 use Tuupola\Middleware\BrancaAuthentication;
 use Tuupola\Middleware\HttpBasicAuthentication;
 use Tuupola\Middleware\CorsMiddleware;
+use Tuupola\Middleware\ServerTimingMiddleware;
 use Response\UnauthorizedResponse;
 
 $container = $app->getContainer();
@@ -80,10 +81,21 @@ $container["Negotiation"] = function ($container) {
     ]);
 };
 
+$container["Negotiation"] = function ($container) {
+    return new NegotiationMiddleware([
+        "accept" => ["application/json"]
+    ]);
+};
+
+$container["ServerTimingMiddleware"] = function ($container) {
+    return new ServerTimingMiddleware;
+};
+
 $app->add("HttpBasicAuthentication");
 $app->add("BrancaAuthentication");
 $app->add("CorsMiddleware");
 $app->add("Negotiation");
+$app->add("ServerTimingMiddleware");
 
 $container["cache"] = function ($container) {
     return new CacheUtil;
