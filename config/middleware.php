@@ -17,7 +17,7 @@ use App\Token;
 use Crell\ApiProblem\ApiProblem;
 use Gofabian\Negotiation\NegotiationMiddleware;
 use Micheh\Cache\CacheUtil;
-use Tuupola\Middleware\JwtAuthentication;
+use Tuupola\Middleware\BrancaAuthentication;
 use Tuupola\Middleware\HttpBasicAuthentication;
 use Tuupola\Middleware\CorsMiddleware;
 use Response\UnauthorizedResponse;
@@ -41,19 +41,20 @@ $container["token"] = function ($container) {
     return new Token;
 };
 
-$container["JwtAuthentication"] = function ($container) {
-    return new JwtAuthentication([
+$container["BrancaAuthentication"] = function ($container) {
+    return new BrancaAuthentication([
         "path" => "/",
         "ignore" => ["/token", "/info"],
-        "secret" => getenv("JWT_SECRET"),
+        "secret" => getenv("BRANCA_SECRET"),
         "logger" => $container["logger"],
         "attribute" => false,
         "relaxed" => ["192.168.50.52", "127.0.0.1", "localhost"],
-        "error" => function ($request, $response, $arguments) {
+        "error" => function ($response, $arguments) {
             return new UnauthorizedResponse($arguments["message"], 401);
         },
-        "before" => function ($request, $response, $arguments) use ($container) {
-            $container["token"]->hydrate($arguments["decoded"]);
+        "before" => function ($request, $arguments) use ($container) {
+            $payload = json_decode($arguments["decoded"]);
+            $container["token"]->hydrate($payload);
         }
     ]);
 };
@@ -80,7 +81,7 @@ $container["Negotiation"] = function ($container) {
 };
 
 $app->add("HttpBasicAuthentication");
-$app->add("JwtAuthentication");
+$app->add("BrancaAuthentication");
 $app->add("CorsMiddleware");
 $app->add("Negotiation");
 
